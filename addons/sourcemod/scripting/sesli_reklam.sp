@@ -13,7 +13,7 @@ public Plugin myinfo =
 	name = "Sesli Reklam", 
 	author = "phiso", 
 	description = "Oyunculara belirlediğiniz sesleri belirlediğiniz saniyede dinletir.", 
-	version = "1.0", 
+	version = "1.1", 
 	url = "www.forum.pluginmerkezi.com - phiso#5523"
 };
 public void OnMapStart()
@@ -55,8 +55,9 @@ public void OnClientPutInServer(int client)
 	Kontrol[client] = true;
 }
 
-public Action reklam(Handle Timer)
+public Action reklam(Handle Timer, any data)
 {
+	sayi++;
 	if (sayi == 1)
 	{
 		if (ses1.BoolValue)
@@ -69,7 +70,6 @@ public Action reklam(Handle Timer)
 				}
 			}
 		}
-		sayi = 2;
 	}
 	else if (sayi == 2)
 	{
@@ -83,7 +83,6 @@ public Action reklam(Handle Timer)
 				}
 			}
 		}
-		sayi = 3;
 	}
 	else if (sayi == 3)
 	{
@@ -97,6 +96,6 @@ public Action reklam(Handle Timer)
 				}
 			}
 		}
-		sayi = 1;
+		sayi = 0;
 	}
 } 
