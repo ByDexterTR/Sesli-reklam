@@ -3,7 +3,6 @@
 #pragma semicolon 1
 #pragma newdecls required
 bool Kontrol[MAXPLAYERS];
-int sayi = 1;
 ConVar reklamsure = null, 
 ses1 = null, 
 ses2 = null, 
@@ -24,7 +23,6 @@ public void OnMapStart()
 	AddFileToDownloadsTable("sound/Plugin_Merkezi/ses1.mp3");
 	AddFileToDownloadsTable("sound/Plugin_Merkezi/ses2.mp3");
 	AddFileToDownloadsTable("sound/Plugin_Merkezi/ses3.mp3");
-	CreateTimer(reklamsure.FloatValue, reklam, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public void OnPluginStart()
@@ -35,6 +33,10 @@ public void OnPluginStart()
 	ses2 = CreateConVar("sm_seslireklam_ses2", "1", "İkinci ses aktif olsun mu?", FCVAR_NONE, true, 0.0, true, 1.0);
 	ses3 = CreateConVar("sm_seslireklam_ses3", "1", "Üçüncü ses aktif olsun mu?", FCVAR_NONE, true, 0.0, true, 1.0);
 	AutoExecConfig(true, "Sesli_Reklam", "phiso");
+}
+public void OnConfigsExecuted()
+{
+	CreateTimer(reklamsure.FloatValue, reklam, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
 }
 public Action seslireklam(int client, int args)
 {
@@ -55,18 +57,21 @@ public void OnClientPutInServer(int client)
 	Kontrol[client] = true;
 }
 
-public Action reklam(Handle Timer, any data)
+public Action reklam(Handle timer)
 {
-	sayi++;
+	int sayi = GetRandomInt(1, 3);
 	if (sayi == 1)
 	{
 		if (ses1.BoolValue)
 		{
 			for (int i = 1; i <= MaxClients; i++)
 			{
-				if (IsClientInGame(i) && !IsFakeClient(i) && Kontrol[i])
+				if (IsClientInGame(i) && !IsFakeClient(i))
 				{
-					EmitSoundToClient(i, "Plugin_Merkezi/ses1.mp3");
+					if (Kontrol[i])
+					{
+						EmitSoundToClient(i, "Plugin_Merkezi/ses1.mp3");
+					}
 				}
 			}
 		}
@@ -77,9 +82,12 @@ public Action reklam(Handle Timer, any data)
 		{
 			for (int i = 1; i <= MaxClients; i++)
 			{
-				if (IsClientInGame(i) && !IsFakeClient(i) && Kontrol[i])
+				if (IsClientInGame(i) && !IsFakeClient(i))
 				{
-					EmitSoundToClient(i, "Plugin_Merkezi/ses2.mp3");
+					if (Kontrol[i])
+					{
+						EmitSoundToClient(i, "Plugin_Merkezi/ses2.mp3");
+					}
 				}
 			}
 		}
@@ -90,12 +98,14 @@ public Action reklam(Handle Timer, any data)
 		{
 			for (int i = 1; i <= MaxClients; i++)
 			{
-				if (IsClientInGame(i) && !IsFakeClient(i) && Kontrol[i])
+				if (IsClientInGame(i) && !IsFakeClient(i))
 				{
-					EmitSoundToClient(i, "Plugin_Merkezi/ses3.mp3");
+					if (Kontrol[i])
+					{
+						EmitSoundToClient(i, "Plugin_Merkezi/ses3.mp3");
+					}
 				}
 			}
 		}
-		sayi = 0;
 	}
 } 
