@@ -1,111 +1,93 @@
 #include <sourcemod>
 #include <sdktools>
+#include <emitsoundany>
+
 #pragma semicolon 1
 #pragma newdecls required
-bool Kontrol[MAXPLAYERS];
-ConVar reklamsure = null, 
-ses1 = null, 
-ses2 = null, 
-ses3 = null;
+
+bool Kontrol[MAXPLAYERS] =  { true, ... };
+ConVar reklamsure = null, ses1 = null, ses2 = null, ses3 = null;
+int Sessayi = 0;
+
 public Plugin myinfo = 
 {
 	name = "Sesli Reklam", 
-	author = "phiso", 
+	author = "phiso, ByDexter", 
 	description = "Oyunculara belirlediğiniz sesleri belirlediğiniz saniyede dinletir.", 
-	version = "1.1", 
+	version = "1.2", 
 	url = "www.forum.pluginmerkezi.com - phiso#5523"
 };
+
 public void OnMapStart()
 {
-	PrecacheSound("Plugin_Merkezi/ses1.mp3");
-	PrecacheSound("Plugin_Merkezi/ses2.mp3");
-	PrecacheSound("Plugin_Merkezi/ses3.mp3");
+	Sessayi = 0;
+	CreateTimer(reklamsure.FloatValue, reklam, _, TIMER_FLAG_NO_MAPCHANGE | TIMER_REPEAT);
+	PrecacheSoundAny("Plugin_Merkezi/ses1.mp3");
 	AddFileToDownloadsTable("sound/Plugin_Merkezi/ses1.mp3");
+	PrecacheSoundAny("Plugin_Merkezi/ses2.mp3");
 	AddFileToDownloadsTable("sound/Plugin_Merkezi/ses2.mp3");
+	PrecacheSoundAny("Plugin_Merkezi/ses3.mp3");
 	AddFileToDownloadsTable("sound/Plugin_Merkezi/ses3.mp3");
 }
 
 public void OnPluginStart()
 {
-	RegConsoleCmd("sm_seslireklam", seslireklam);
-	reklamsure = CreateConVar("sm_seslireklam_sure", "180", "Sesli reklam süresi", FCVAR_NONE, true, 0.0, true, 1.0);
-	ses1 = CreateConVar("sm_seslireklam_ses1", "1", "Birinci ses aktif olsun mu?", FCVAR_NONE, true, 0.0, true, 1.0);
-	ses2 = CreateConVar("sm_seslireklam_ses2", "1", "İkinci ses aktif olsun mu?", FCVAR_NONE, true, 0.0, true, 1.0);
-	ses3 = CreateConVar("sm_seslireklam_ses3", "1", "Üçüncü ses aktif olsun mu?", FCVAR_NONE, true, 0.0, true, 1.0);
+	RegConsoleCmd("sm_seslireklam", seslireklam, "Sesli reklamları aktifleştirip/kapatır");
+	reklamsure = CreateConVar("sm_seslireklam_sure", "180.0", "Sesli reklam süresi ( Harita değiştiğinde güncellenir süre )", 0, true, 0.0, true, 1.0);
+	ses1 = CreateConVar("sm_seslireklam_ses1", "1", "Birinci ses aktif olsun mu?", 0, true, 0.0, true, 1.0);
+	ses2 = CreateConVar("sm_seslireklam_ses2", "1", "İkinci ses aktif olsun mu?", 0, true, 0.0, true, 1.0);
+	ses3 = CreateConVar("sm_seslireklam_ses3", "1", "Üçüncü ses aktif olsun mu?", 0, true, 0.0, true, 1.0);
 	AutoExecConfig(true, "Sesli_Reklam", "phiso");
 }
-public void OnConfigsExecuted()
-{
-	CreateTimer(reklamsure.FloatValue, reklam, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
-}
+
 public Action seslireklam(int client, int args)
 {
-	if (Kontrol[client])
-	{
-		Kontrol[client] = false;
-		PrintToChat(client, "[SM] \x02Sesli reklam \x04başarılı bir şekilde kapandı!");
-	}
-	else
-	{
-		Kontrol[client] = true;
-		PrintToChat(client, "[SM] \x02Sesli reklam \x04başarılı bir şekilde açıldı!");
-	}
-}
-public void OnClientPutInServer(int client)
-{
-	PrintToConsole(client, "★ Sunucuya girdiğiniz için sesli reklam aktifleşti.");
-	Kontrol[client] = true;
+	Kontrol[client] = !Kontrol[client];
+	PrintToChat(client, "[SM] %s", Kontrol[client] ? "Sesli reklamlar \x07kapatıldı!":"Sesli reklamlar \x04açıldı!");
+	return Plugin_Handled;
 }
 
-public Action reklam(Handle timer)
+public void OnClientPostAdminCheck(int client)
 {
-	int sayi = GetRandomInt(1, 3);
-	if (sayi == 1)
+	if (IsClientInGame(client) && IsClientConnected(client))
+	{
+		PrintToChat(client, "[SM] Sesli reklamlar aktif, \x04sm_seslireklam \x01komutu ile kapatabilirsiniz.");
+		Kontrol[client] = true;
+	}
+}
+
+public Action reklam(Handle timer, any data)
+{
+	Sessayi++;
+	if (Sessayi == 1)
 	{
 		if (ses1.BoolValue)
 		{
-			for (int i = 1; i <= MaxClients; i++)
+			for (int i = 1; i <= MaxClients; i++)if (IsClientInGame(i) && IsClientConnected(i) && !IsFakeClient(i) && Kontrol[i])
 			{
-				if (IsClientInGame(i) && !IsFakeClient(i))
-				{
-					if (Kontrol[i])
-					{
-						EmitSoundToClient(i, "Plugin_Merkezi/ses1.mp3");
-					}
-				}
+				EmitSoundToClientAny(i, "Plugin_Merkezi/ses1.mp3", SOUND_FROM_PLAYER, 1, SNDLEVEL_NORMAL);
 			}
 		}
 	}
-	else if (sayi == 2)
+	else if (Sessayi == 2)
 	{
 		if (ses2.BoolValue)
 		{
-			for (int i = 1; i <= MaxClients; i++)
+			for (int i = 1; i <= MaxClients; i++)if (IsClientInGame(i) && IsClientConnected(i) && !IsFakeClient(i) && Kontrol[i])
 			{
-				if (IsClientInGame(i) && !IsFakeClient(i))
-				{
-					if (Kontrol[i])
-					{
-						EmitSoundToClient(i, "Plugin_Merkezi/ses2.mp3");
-					}
-				}
+				EmitSoundToClientAny(i, "Plugin_Merkezi/ses2.mp3", SOUND_FROM_PLAYER, 1, SNDLEVEL_NORMAL);
 			}
 		}
 	}
-	else if (sayi == 3)
+	else if (Sessayi == 3)
 	{
 		if (ses3.BoolValue)
 		{
-			for (int i = 1; i <= MaxClients; i++)
+			for (int i = 1; i <= MaxClients; i++)if (IsClientInGame(i) && IsClientConnected(i) && !IsFakeClient(i) && Kontrol[i])
 			{
-				if (IsClientInGame(i) && !IsFakeClient(i))
-				{
-					if (Kontrol[i])
-					{
-						EmitSoundToClient(i, "Plugin_Merkezi/ses3.mp3");
-					}
-				}
+				EmitSoundToClientAny(i, "Plugin_Merkezi/ses3.mp3", SOUND_FROM_PLAYER, 1, SNDLEVEL_NORMAL);
 			}
 		}
+		Sessayi = 0;
 	}
-} 
+}
